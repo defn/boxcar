@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+
+function remote_install {
+  set -exfu
+
+  export DEBIAN_FRONTEND="noninteractive"
+
+  source /etc/lsb-release
+
+  # complete list of apt repos
+  local nm_distro="$DISTRIB_CODENAME"
+
+  # disable tty
+  set +f
+  for t in /etc/init/tty*.conf /etc/init/console.conf; do 
+    echo manual > ${t%.conf}.override
+    stop $(basename $t .conf) || true
+  done
+  set -f
+
+  # enable root
+  mkdir -p /etc/cloud/cloud.cfg.d
+  echo 'disable_root: false' > /etc/cloud/cloud.cfg.d/01_enable_root.cfg
+
+  # update everything
+  rm -rf /var/lib/apt/lists
+  aptitude update
+  aptitude -y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confnew dist-upgrade
+  aptitude -y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confnew safe-upgrade
+
+  # don't upgrade kernel hereafter
+  aptitude hold linux-{,{headers,image}-}{generic,server,virtual}
+
+  # basic packages
+  echo 'APT::Install-Recommends "0";' | tee /etc/apt/apt.conf.d/00DisableInstallRecommends
+  echo 'Acquire::Languages "none";'  | tee /etc/apt/apt.conf.d/99DontAcquireLanguages
+  aptitude -y install wget curl git rsync make bsdtar netcat dkms unzip
+  aptitude -y install flex python-{dev,pip,setuptools,virtualenv}
+  aptitude -y install runit daemontools
+
+  # package cleanup
+  aptitude clean
+
+  # ssl updates
+  update-ca-certificates --fresh > /dev/null
+
+  # github.com, bitbucket.org
+  cat >> /etc/ssh/ssh_known_hosts <<EOF
+github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==
+bitbucket.org ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAubiN81eDcafrgMeLzaFPsw2kNvEcqTKl/VqLat/MaB33pZy0y3rJZtnqwR2qOOvbwKZYKiEO1O6VqNEBxKvJJelCq0dTXWT5pbO2gDXC6h6QDXCaHo6pOHGPUy+YBaGQRGuSusMEASYiWunYN0vCAI8QaXnWMXNMdFP3jHAJH0eDsoiGnLPBlBp4TNm6rYI74nMzgz3B9IikW4WVK+dc8KZJZWYjAuORU3jc1c/NPskD2ASinf8v3xnfXeukU0sJ5N6m5E8VLjObPEO+mN2t/FZTMZLiFqPWc/ALSqnMnnhwrNi2rbfg/rd/IpL8Le3pSBne8+seeFVBoGqzHM9yXw==
+EOF
+
+  # remove cached network configurations
+  rm -rf /etc/udev/rules.d/70-persistent-net.rules /lib/udev/rules.d/75-persistent-net-generator.rules /dev/.udev /var/lib/dhcp3
+  mkdir -p /etc/udev/rules.d/70-persistent-net.rules
+
+  sync; sync; sync
+}
+
+if [[ "$#" = 0 ]]; then
+  remote_install
+  exit $?
+fi
+
+source boxcar_common
+source boxcar_cli
+
+BOOTSTRAP="$BASH_SOURCE"
+
+# entry point
+function main {
+  local pth_ssh_config="$1"
+
+  local pth_output="${OVERRIDE_output%.box}"
+  rsync -ia "$(find $pth_output/.vagrant/ -name 'private_key')" "$pth_output/"
+  standard_root_hook "$BOOTSTRAP" "$@"
+}
+
+source sub "$BASH_SOURCE" "$@"

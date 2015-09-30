@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+function remote_install {
+  set -x
+
+  env; echo
+
+  id -a
+  uname -a
+  pwd
+  ssh-add -list
+  false
+}
+
+if [[ "$#" = 0 ]]; then
+  remote_install
+  exit $?
+fi
+
+source boxcar_common
+source boxcar_cli
+
+BOOTSTRAP="$BASH_SOURCE"
+
+function main {
+  standard_hook "$BOOTSTRAP" "$@"
+}
+
+source sub "$BASH_SOURCE" "$@"

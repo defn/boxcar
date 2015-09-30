@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+function guess_vagrant_default_provider {
+  local pth_docker="$(which docker 2>&- || true)"
+  if [[ -x "$pth_docker" ]]; then
+    echo "docker"
+    return 0
+  fi
+
+  local pth_vboxmanage="$(which VBoxManage 2>&- || true)"
+  if [[ -x "$pth_vboxmanage" ]]; then
+    echo "virtualbox"
+    return 0
+  fi
+
+  echo "aws"
+}
+
+DEFINE_string "boxname" "" "Vagrant box name"
+DEFINE_string 'release' "trusty" 'Ubuntu release'
+DEFINE_string 'provider' "$(guess_vagrant_default_provider)" 'Vagrant provider'
+DEFINE_string 'branch' "master" 'Generic label'
+DEFINE_string "output" "" "Where to bundle the vagrant box"
+DEFINE_boolean "fast" "$FLAGS_FALSE" "Dont run slow ops like exports"
+DEFINE_string "release_dir" "$BOXCAR/vagrant-$(TZ=UTC date +%Y%m%d-%H%M-$$)" "Vagrant instance workarea"
+DEFINE_string "username" "ubuntu" "Vagrant ssh username"
+DEFINE_string "address" "NA" "Script defined generic address"
+DEFINE_string "anchor" "." "Initial working directory"
+DEFINE_string "apps" "" "List of apps to install"
+DEFINE_boolean "agent" "$FLAGS_FALSE" "Use ssh-agent"
+DEFINE_string "key" "" "Use ssh private key"
+
+DEFINE_string builddir "$BOXCAR/build" "Build directory"
+DEFINE_string cachedir "$BOXCAR/build" "Cache directory"
+
+DEFINE_string failhook "" "Run script in case of failure"

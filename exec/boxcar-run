@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+source boxcar_common
+source boxcar_cli
+
+# entry point
+function main {
+  continue_image_hook "$@"
+}
+
+source sub "$BASH_SOURCE" "$@"

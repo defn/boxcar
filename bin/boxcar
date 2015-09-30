@@ -1,11 +1,8 @@
 #!/usr/bin/env bash
 
-export MEH=1
-
 function main {
-  ps axu | head
-  echo "$@"
-  echo "$MEH"
+  local shome="$(unset CDPATH; cd -P -- "$(dirname -- "$BASH_SOURCE")/.." && pwd -P)"
+  PATH="$shome/bin:$shome/exec:$PATH"
 }
 
 source sub "$0" "$@"
