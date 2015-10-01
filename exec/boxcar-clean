@@ -62,7 +62,6 @@ if [[ "$#" = 0 ]]; then
   exit $?
 fi
 
-source boxcar_common
 source boxcar_cli
 
 BOOTSTRAP="$BASH_SOURCE"

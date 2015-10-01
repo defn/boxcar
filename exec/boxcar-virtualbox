@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-source boxcar_common
 source boxcar_cli
 
 function vbox_state {

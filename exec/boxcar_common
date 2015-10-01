@@ -1,17 +1,6 @@
 #!/usr/bin/env bash
 
-boxcar_shome="$(unset CDPATH; cd -P -- "$(dirname -- "${BASH_SOURCE}")/.." && pwd -P)"
-
-PATH="$PATH:$(unset CDPATH; cd -P -- "$(dirname -- "${BASH_SOURCE}")/.." && pwd -P)/libexec"
-
-function fuglet {
-  local pth_figlet="$(which figlet 2>&- || true)"
-  if [[ -x "$pth_figlet" ]]; then
-    "$pth_figlet" -w 425  "$@" | perl -pe 's{([ ]+)(\S)}{sprintf("%c",96) x length($1) . $2}ge'
-  else
-    printf "[[[ %s ]]]\n" "$*"
-  fi
-}
+PATH="$PATH:$(unset CDPATH; cd -P -- "$(dirname -- "${BASH_SOURCE}")/.." && pwd -P)/exec"
 
 function until_port_open {
   local address="$1"; shift
@@ -64,7 +53,7 @@ function start_image_hook {
   local pth_hook="$shome/libexec/boxcar-run"
 
   if [[ "$#" = 0 ]]; then
-    fuglet NOT FOUND
+    echo info NOT FOUND
     echo fatal "missing build boxcar script arg"
     exit 1
   fi
@@ -85,7 +74,7 @@ function continue_image_hook {
   local pth_hook="$(type -P boxcar-${nm_hook} 2>&- || true)"
 
   if [[ ! -x "$pth_hook" ]]; then
-    fuglet NOT FOUND
+    echo info NOT FOUND
     echo fatal "could not find boxcar script for $nm_hook"
     return 1
   fi
@@ -101,7 +90,7 @@ function custom_hook {
 
   configure_remote_bootstrap "$pth_bootstrap"
 
-  fuglet "$nm_bootstrap"
+  echo info "$nm_bootstrap"
 
   echo info "starting $nm_bootstrap"
   local failed=0
@@ -111,7 +100,7 @@ function custom_hook {
     echo info "success! $nm_bootstrap"
     ssh -F "$pth_ssh_config" default env LANG=C rm -vfr ./.boxcar
   else
-    fuglet "exit code: $failed"
+    echo info "exit code: $failed"
     echo fatal "failed! $nm_bootstrap"
   fi
 

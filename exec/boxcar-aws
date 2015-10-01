@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-source boxcar_common
 source boxcar_cli
 
 DEFINE_string "ami" "" "AMI to use for bootstrap, defaults to latest Ubuntu cloud image"

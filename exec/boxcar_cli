@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+source boxcar_common
+
 function guess_vagrant_default_provider {
   local pth_docker="$(which docker 2>&- || true)"
   if [[ -x "$pth_docker" ]]; then
